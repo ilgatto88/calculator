@@ -1,23 +1,27 @@
-let userNumber = [];
+let userNumberStrings = [];
 let userOperation = "";
 let numbers = [];
-let displayValue = "";
+let mainDisplayValue = "";
+let secondaryDisplayValue = "";
 
 
 let numericButtons = document.querySelectorAll(".number");
 let operationButtons = document.querySelectorAll(".operation");
+let allPrintableButtons = document.querySelectorAll(".printable");
 let divideButton = document.querySelector("#divide");
 let multiplyButton = document.querySelector("#multiply");
 let subtractButton = document.querySelector("#subtract");
 let addButton = document.querySelector("#add");
 let equalButton = document.querySelector("#equal");
+let mainDisplay = document.querySelector(".main-display");
+let secondaryDisplay = document.querySelector(".secondary-display");
 
 // equalButton.addEventListener("click", operate(numbers))
 
 numericButtons.forEach(button => {
     button.addEventListener(
         "click", () => {
-            userNumber.push(button.value);
+            numericButtonPushed(button.value);
         })
 });
 
@@ -25,40 +29,87 @@ numericButtons.forEach(button => {
 operationButtons.forEach(button => {
     button.addEventListener(
         "click", () => {
-            operationorEqualPushed(button.value);
+            operationOrEqualPushed(button.value);
         })
 });
 
-equalButton.addEventListener("click", () => { operationorEqualPushed(); })
+allPrintableButtons.forEach(button => {
+    button.addEventListener(
+        "click", () => {
+            addToMainDisplay(button.value);
+        })
+})
 
-function operationorEqualPushed(operation) {
-    if (userOperation !== "") {
-        console.log("Equal button pushed")
-        numbers.push(concatenateNumber(userNumber));
-        console.log(`Numbers in array: ${numbers}`);
-        clearUserNumberArray();
-        console.log("User number array cleared.");
-        let result = operate(numbers, userOperation);
-        console.log(result);
-        userOperation = "";
-        clearNumbers();
-    }
-    else {
-        userOperation = operation;
-        console.log(`Operation selected: ${operation}`);
-        numbers.push(concatenateNumber(userNumber));
-        console.log(`Numbers in array: ${numbers}`);
-        clearUserNumberArray();
-        console.log("User number array cleared.");
+equalButton.onclick = (e) => operationOrEqualPushed(e.target.value);
+
+
+function numericButtonPushed(value) {
+    if (userNumberStrings.length === 0 && numbers.length === 0) {
+        clearMainDisplay();
+        userNumberStrings.push(value);
+    } else if (userNumberStrings.length === 0 && numbers.length === 1) {
+        userNumberStrings.push(value);
+    } else if (userNumberStrings.length > 0) {
+        userNumberStrings.push(value);
     }
 }
 
-function concatenateNumber(userNumber) {
-    return parseInt(userNumber.join(""));
+function addToMainDisplay(value) {
+    mainDisplayValue += value;
+    mainDisplay.innerHTML += value;
+}
+
+function clearMainDisplay() {
+    mainDisplayValue = "";
+    mainDisplay.innerHTML = "";
+}
+
+function addToSecondaryDisplay(value) {
+    secondaryDisplayValue = value;
+    secondaryDisplay.innerHTML = value;
+}
+
+function operationOrEqualPushed(operation) {
+    if (operation === "=" && numbers.length === 1 && userNumberStrings.length > 0) {
+        numbers.push(concatenateNumber(userNumberStrings));
+        clearUserNumberArray();
+        let result = operate(numbers, userOperation);
+        clearNumbers();
+        addToSecondaryDisplay(mainDisplay.innerHTML + "=");
+        clearMainDisplay();
+        addToMainDisplay(result);
+        userOperation = operation;
+    } else if (operation === "=" && numbers.length === 1 && userNumberStrings.length === 0) {
+        numbers.push(numbers[0]);
+        addToMainDisplay(numbers[0]);
+        let result = operate(numbers, userOperation);
+        clearNumbers();
+        addToSecondaryDisplay(mainDisplay.innerHTML + "=");
+        clearMainDisplay();
+        addToMainDisplay(result);
+        userOperation = operation;
+    } else if (operation === "=" && numbers.length === 0) {
+        return
+    } else if (operation !== "=" && userNumberStrings.length > 0) {
+        userOperation = operation;
+        numbers.push(concatenateNumber(userNumberStrings));
+        clearUserNumberArray();
+    } else if (operation !== "=" && userNumberStrings.length === 0 && numbers.length === 0 && userOperation !== "=") {
+        numbers.push(0);
+        userOperation = operation;
+        addToMainDisplay("0");
+    } else if (operation !== "=" && userNumberStrings.length === 0 && numbers.length === 0 && userOperation === "=") {
+        numbers.push(parseInt(mainDisplayValue));
+        userOperation = operation;
+    }
+}
+
+function concatenateNumber(userNumberStrings) {
+    return parseInt(userNumberStrings.join(""));
 }
 
 function clearUserNumberArray() {
-    userNumber = [];
+    userNumberStrings = [];
 }
 
 function clearNumbers() {
@@ -78,7 +129,7 @@ function multiply(numbers) {
 }
 
 function divide(numbers) {
-    return numbers[0] / numbers[1]
+    return round(numbers[0] / numbers[1], 2)
 }
 
 function operate(numbers, operation) {
@@ -92,4 +143,9 @@ function operate(numbers, operation) {
         case "/":
             return divide(numbers);
     }
+}
+
+function round(value, precision) {
+    var multiplier = Math.pow(10, precision || 0);
+    return Math.round(value * multiplier) / multiplier;
 }
